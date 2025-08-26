@@ -3,6 +3,14 @@ import logging
 import pathlib
 import os
 from functools import partial
+import argparse
+
+def parseArguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-sg','--smallgrid', action='store_true', help='use small grid (12x7) instead of big grid (8x5)')
+    args = parser.parse_args()
+    sg = args.smallgrid
+    return sg
 
 logdir = 'pylatusGUIlog'
 homedir = pathlib.Path.home()
@@ -34,9 +42,13 @@ class Ui_MainWindow(object):
         self.elementList = {}
         self.repLists = {}
         self.values = {}
-
-        ncols = 8
-        nrows = 5
+        sg = parseArguments()
+        if sg:
+            ncols = 12
+            nrows = 7
+        else:
+            ncols = 8
+            nrows = 5
         nsubrows = 4
 
         self.namesLabels = {}
@@ -68,7 +80,7 @@ class Ui_MainWindow(object):
         
         for n in range(ncols):
             for i in range(nrows):
-                index = n+1+i*8
+                index = n+1+i*ncols
                 self.values[index] = False
                 self.pelletLabels[index] = QtWidgets.QLabel()
                 self.pelletLabels[index].setObjectName(f'pellet{index}')
@@ -101,7 +113,14 @@ class Ui_MainWindow(object):
                 self.repLists[index] = QtWidgets.QLineEdit()
                 self.repLists[index].setObjectName(f'repLists{index}')
                 self.gridLayout.addWidget(self.repLists[index], i*nsubrows+3,n+1)
-                
+        
+        self.helpLabel = QtWidgets.QLabel()
+        self.helpLabel.setObjectName('helpLabel')
+        self.helpLabel.setText(('element list: comma separated elements. e.g. Cu,Fe,Zn\n'
+                                'repetition list: leave blank (default 3), comma separated values, or individual value\n'
+                                'e.g. 1,3,5 or just 5'))
+        self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 5)
+
         self.runButton = QtWidgets.QPushButton()
         self.runButton.setObjectName('runButton')
         self.runButton.setText('generate code')
@@ -110,15 +129,40 @@ class Ui_MainWindow(object):
         self.runButton.setMinimumHeight(50)
         self.runButton.adjustSize()
         self.runButton.clicked.connect(self.generateCode)
-        self.gridLayout.addWidget(self.runButton,nrows*nsubrows, 0)
+        self.gridLayout.addWidget(self.runButton,nrows*nsubrows, 0, 2,1)
+
+        self.ylabel = QtWidgets.QLabel()
+        self.ylabel.setObjectName('ylabel')
+        self.ylabel.setText('y motor')
+        self.gridLayout.addWidget(self.ylabel, nrows*nsubrows,5)
+
+        self.ymotors = QtWidgets.QComboBox()
+        self.ymotors.setObjectName('ymotors')
+        self.ymotors.addItem('sty')
+        self.ymotors.addItem('capy')
+        
+        self.gridLayout.addWidget(self.ymotors,nrows*nsubrows+1, 5)
+
+        self.zlabel = QtWidgets.QLabel()
+        self.zlabel.setObjectName('zlabel')
+        self.zlabel.setText('z motor')
+        self.gridLayout.addWidget(self.zlabel, nrows*nsubrows, 6)
+
+        self.zmotors =  QtWidgets.QComboBox()
+        self.zmotors.addItem('stzb')
+        self.zmotors.addItem('battz')
+        self.gridLayout.addWidget(self.zmotors,nrows*nsubrows+1, 6)
+        
+        self.ymotors.currentIndexChanged.connect(self.setZmotors)
 
         self.group.setLayout(self.gridLayout)
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidget(self.group)
-        
-        self.centralwidget.setLayout(self.gridLayout)
+        self.outerLayout = QtWidgets.QHBoxLayout()
+        self.outerLayout.addWidget(self.scrollArea)
+        self.centralwidget.setLayout(self.outerLayout)
 
-        self.MainWindow.resize(800, 500)
+        self.MainWindow.resize((ncols+1)*125, 900)
 
         self.MainWindow.setCentralWidget(self.centralwidget)
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
@@ -129,6 +173,12 @@ class Ui_MainWindow(object):
                     False:self.greypic}
         self.pelletLabels[index].setPixmap(valuedct[value])
         self.values[index] = value
+
+    def setZmotors(self):
+        match self.ymotors.currentText():
+            case 'sty': self.zmotors.setItemText(0,'stzb')
+            #self.zmotors.addItem('battz')
+            case 'capy': self.zmotors.setItemText(0,'capz')
 
     def generateLists(self):
         positionList = []
@@ -142,14 +192,20 @@ class Ui_MainWindow(object):
             sampleList.append(self.sampleNames[index].text())
             elSublist = self.elementList[index].text().replace(' ','').split(',')
             elementList2.append(elSublist)
-            repSublist = [int(i) for i in self.repLists[index].text().split(',')]
+
+            if not self.repLists[index].text():
+                repSublist = [3]
+            else:
+                repSublist = [int(i) for i in self.repLists[index].text().split(',')]
             if len(repSublist) == 1:
-                repSublist = repSublist[0]
+                repSublist = int(repSublist[0])
             elif not repSublist:
                 repSublist = 3
             elif len(repSublist) != len(elSublist):
                 #print('mismatch in repetition and element lists')
                 raise ValueError('mismatch in repetition and element lists')
+
+                
             repetitionList.append(repSublist)
         return positionList,sampleList,elementList2, repetitionList
     
@@ -159,12 +215,14 @@ class Ui_MainWindow(object):
         except ValueError as e:
             print(e)
             return
+        zmotor= self.zmotors.currentText()
+        ymotor=  self.ymotors.currentText()
         string = f'\npositionList = {positionList}\n'
         string += f'sampleList = {sampleList}\n'
         string += f'elementList = {elementList2}\n'
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
-                   f'elementList = elementList, repList = repList, stage = , zmotorName = , autoGains = True, bigGrid = True, skip = 0)')
+                   f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True, bigGrid = True, skip = 0)')
         print(string)
 
 
