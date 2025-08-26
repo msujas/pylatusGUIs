@@ -85,7 +85,6 @@ class Ui_MainWindow(object):
                 self.pelletLabels[index] = QtWidgets.QLabel()
                 self.pelletLabels[index].setObjectName(f'pellet{index}')
                 self.pelletLabels[index].setScaledContents(True)
-                #self.pelletLabels[index].setText(str(index))
                 self.pelletLabels[index].setPixmap(self.greypic)
                 self.pelletLabels[index].setMaximumWidth(70)
                 self.pelletLabels[index].setMaximumHeight(70)
@@ -96,9 +95,8 @@ class Ui_MainWindow(object):
                 self.buttons[index].setText(str(index))
                 self.buttons[index].setMaximumWidth(60)
                 self.buttons[index].setMinimumHeight(60)
+                self.buttons[index].setFlat(True)
                 self.buttons[index].setStyleSheet('background-color:rgba(255,255,255,0)')
-                #self.buttons[index].setStyleSheet('border:none')
-                #self.buttons[index].setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
                 self.buttons[index].clicked.connect(partial(self.changeLabelColor, index))
                 self.gridLayout.addWidget(self.buttons[index], i*nsubrows,n+1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
                 
@@ -177,7 +175,6 @@ class Ui_MainWindow(object):
     def setZmotors(self):
         match self.ymotors.currentText():
             case 'sty': self.zmotors.setItemText(0,'stzb')
-            #self.zmotors.addItem('battz')
             case 'capy': self.zmotors.setItemText(0,'capz')
 
     def generateLists(self):
