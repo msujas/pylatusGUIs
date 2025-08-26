@@ -215,7 +215,9 @@ class Ui_MainWindow(object):
         zmotor= self.zmotors.currentText()
         ymotor=  self.ymotors.currentText()
         bigGrid = not self.sg
-        string = f'\npositionList = {positionList}\n'
+        string = '\npos1y = #input here\n'
+        string += 'pos1z = #input here'
+        string += f'positionList = {positionList}\n'
         string += f'sampleList = {sampleList}\n'
         string += f'elementList = {elementList2}\n'
         string += f'repList = {repetitionList}\n'
