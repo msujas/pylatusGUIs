@@ -42,8 +42,8 @@ class Ui_MainWindow(object):
         self.elementList = {}
         self.repLists = {}
         self.values = {}
-        sg = parseArguments()
-        if sg:
+        self.sg = parseArguments()
+        if self.sg:
             ncols = 12
             nrows = 7
         else:
@@ -217,12 +217,14 @@ class Ui_MainWindow(object):
             return
         zmotor= self.zmotors.currentText()
         ymotor=  self.ymotors.currentText()
+        bigGrid = not self.sg
         string = f'\npositionList = {positionList}\n'
         string += f'sampleList = {sampleList}\n'
         string += f'elementList = {elementList2}\n'
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
-                   f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True, bigGrid = True, skip = 0)')
+                   f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
+                   f'bigGrid = {bigGrid}, skip = 0)')
         print(string)
 
 
