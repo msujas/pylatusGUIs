@@ -35,7 +35,7 @@ class Ui_MainWindow(object):
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.group = QtWidgets.QGroupBox()
-
+        self.logfile = f'{os.path.dirname(os.path.abspath(__file__))}/params.log'
         self.pelletLabels = {}
         self.sampleNames = {}
         self.buttons = {}
@@ -77,9 +77,8 @@ class Ui_MainWindow(object):
         self.greenpic = QtGui.QPixmap(f'{icondirec}/green.png')
         self.greypic = QtGui.QPixmap(f'{icondirec}/grey.png')
         
-        
-        for n in range(ncols):
-            for i in range(nrows):
+        for i in range(nrows):
+            for n in range(ncols):
                 index = n+1+i*ncols
                 self.values[index] = False
                 self.pelletLabels[index] = QtWidgets.QLabel()
@@ -93,8 +92,8 @@ class Ui_MainWindow(object):
                 self.buttons[index] = QtWidgets.QPushButton()
                 self.buttons[index].setObjectName(f'buttons{index}')
                 self.buttons[index].setText(str(index))
-                self.buttons[index].setMaximumWidth(60)
-                self.buttons[index].setMinimumHeight(60)
+                self.buttons[index].setMaximumWidth(70)
+                self.buttons[index].setMinimumHeight(70)
                 self.buttons[index].setFlat(True)
                 self.buttons[index].setStyleSheet('background-color:rgba(255,255,255,0)')
                 self.buttons[index].clicked.connect(partial(self.changeLabelColor, index))
@@ -117,7 +116,7 @@ class Ui_MainWindow(object):
         self.helpLabel.setText(('element list: comma separated elements. e.g. Cu,Fe,Zn\n'
                                 'repetition list: leave blank (default 3), comma separated values, or individual value\n'
                                 'e.g. 1,3,5 or just 5'))
-        self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 5)
+        self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 4)
 
         self.runButton = QtWidgets.QPushButton()
         self.runButton.setObjectName('runButton')
@@ -164,6 +163,8 @@ class Ui_MainWindow(object):
 
         self.MainWindow.setCentralWidget(self.centralwidget)
         QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
+        self.updateParams()
+        self.readLog()
 
     def changeLabelColor(self, index):
         value = not self.values[index]
@@ -201,8 +202,6 @@ class Ui_MainWindow(object):
             elif len(repSublist) != len(elSublist):
                 #print('mismatch in repetition and element lists')
                 raise ValueError('mismatch in repetition and element lists')
-
-                
             repetitionList.append(repSublist)
         return positionList,sampleList,elementList2, repetitionList
     
@@ -225,9 +224,43 @@ class Ui_MainWindow(object):
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
                    f'bigGrid = {bigGrid}, skip = 0)')
         print(string)
+        self.writeLog()
 
+    def getValue(self,item):
+        match type(item):
+            case QtWidgets.QComboBox: return item.currentIndex()
+            case QtWidgets.QLineEdit: return item.text()
+            
+    def updateParams(self):
+        self.paramdct = {}
+        self.parnames = {}
+        params = [self.ymotors,self.zmotors]
+        for par in params:
+            self.paramdct[par] = par.currentIndex()
+            self.parnames[par.objectName()] = par
+    def writeLog(self):
+        self.updateParams()
+        string = ''
+        for par in self.paramdct:
+            string += f'{par.objectName()};{self.paramdct[par]}\n'
+        f = open(self.logfile,'w')
+        f.write(string)
+        f.close()
 
-    
+    def readLog(self):
+        if not os.path.exists(self.logfile):
+            return
+        f = open(self.logfile,'r')
+        for line in f:
+            if not line:
+                continue
+            name,value = line.split(';')
+            value = int(value)
+            par = self.parnames[name]
+            par.setCurrentIndex(value)
+        f.close()
+        self.updateParams()
+        
 def main():
     import sys
     app = QtWidgets.QApplication(sys.argv)
