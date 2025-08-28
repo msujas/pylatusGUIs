@@ -146,6 +146,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.zlabel, nrows*nsubrows, 6)
 
         self.zmotors =  QtWidgets.QComboBox()
+        self.zmotors.setObjectName('zmotors')
         self.zmotors.addItem('stzb')
         self.zmotors.addItem('battz')
         self.gridLayout.addWidget(self.zmotors,nrows*nsubrows+1, 6)
