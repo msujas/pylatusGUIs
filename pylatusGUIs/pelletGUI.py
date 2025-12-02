@@ -153,6 +153,17 @@ class Ui_MainWindow(object):
         
         self.ymotors.currentIndexChanged.connect(self.setZmotors)
 
+        self.xasLabel = QtWidgets.QLabel()
+        self.xasLabel.setObjectName('xasLabel')
+        self.xasLabel.setText('xas')
+        self.gridLayout.addWidget(self.xasLabel,nrows*nsubrows,7)
+
+        self.xasBox = QtWidgets.QComboBox()
+        self.xasBox.setObjectName('xasBox')
+        self.xasBox.addItem('Exafs')
+        self.xasBox.addItem('Xanes')
+        self.gridLayout.addWidget(self.xasBox,nrows*nsubrows+1,7)
+
         self.group.setLayout(self.gridLayout)
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidget(self.group)
@@ -197,9 +208,7 @@ class Ui_MainWindow(object):
             else:
                 repSublist = [int(i) for i in self.repLists[index].text().split(',')]
             if len(repSublist) == 1:
-                repSublist = int(repSublist[0])
-            elif not repSublist:
-                repSublist = 3
+                repSublist = [repSublist[0]]*len(elSublist)
             elif len(repSublist) != len(elSublist):
                 #print('mismatch in repetition and element lists')
                 raise ValueError('mismatch in repetition and element lists')
@@ -215,6 +224,7 @@ class Ui_MainWindow(object):
         zmotor= self.zmotors.currentText()
         ymotor=  self.ymotors.currentText()
         bigGrid = not self.sg
+        xas = self.xasBox.currentText()
         string = '\npos1y = #input here\n'
         string += 'pos1z = #input here\n'
         string += f'positionList = {positionList}\n'
@@ -223,7 +233,7 @@ class Ui_MainWindow(object):
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
-                   f'bigGrid = {bigGrid}, skip = 0)')
+                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0)')
         print(string)
         self.writeLog()
 
@@ -235,7 +245,7 @@ class Ui_MainWindow(object):
     def updateParams(self):
         self.paramdct = {}
         self.parnames = {}
-        params = [self.ymotors,self.zmotors]
+        params = [self.ymotors,self.zmotors, self.xasBox]
         for par in params:
             self.paramdct[par] = par.currentIndex()
             self.parnames[par.objectName()] = par
