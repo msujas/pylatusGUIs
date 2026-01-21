@@ -20,6 +20,7 @@ package-data = {"pylatusGUIs.icons" = ["green.png","grey.png"]}
 
 [project.scripts]
 pelletGUI = "pylatusGUIs.pelletGUI:main"
+tcalPlotter = "pylatusGUIs.Tcal_plotter:run"
 
 [project.urls]
 repository = "https://github.com/msujas/pylatusGUIs"

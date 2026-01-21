@@ -1,3 +1,5 @@
 pylatusGUIs.egg-info
 pylatusGUIs/__pycache__
 pylatusGUIs/params.log
+.vscode
+pylatusGUIs/inSituGenerator.py

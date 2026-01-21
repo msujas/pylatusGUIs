@@ -147,8 +147,7 @@ class Ui_MainWindow(object):
 
         self.zmotors =  QtWidgets.QComboBox()
         self.zmotors.setObjectName('zmotors')
-        self.zmotors.addItem('stzb')
-        self.zmotors.addItem('battz')
+        self.setZmotors()
         self.gridLayout.addWidget(self.zmotors,nrows*nsubrows+1, 6)
         
         self.ymotors.currentIndexChanged.connect(self.setZmotors)
@@ -186,9 +185,11 @@ class Ui_MainWindow(object):
         self.values[index] = value
 
     def setZmotors(self):
+        self.zmotors.clear()
         match self.ymotors.currentText():
-            case 'sty': self.zmotors.setItemText(0,'stzb')
-            case 'capy': self.zmotors.setItemText(0,'capz')
+            case 'sty': items = ['stzb', 'battz'] #self.zmotors.setItemText(0,'stzb')
+            case 'capy': items = ['capz','battz','fastz'] #self.zmotors.setItemText(0,'capz')
+        self.zmotors.addItems(items)
 
     def generateLists(self):
         positionList = []
