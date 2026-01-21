@@ -1,11 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import sys,re
+import re
 from scipy.optimize import curve_fit
 import argparse
 
-
-file = sys.argv[1]
 
 def parseArgs():
     parser = argparse.ArgumentParser()
@@ -13,6 +11,9 @@ def parseArgs():
     args = parser.parse_args()
     file = args.file
     return file
+
+def quad_fit(x,a0,a1,a2):
+    return a0 + a1*x + a2*x**2
 
 def run():
     file = parseArgs()
@@ -30,8 +31,6 @@ def run():
     Tfit = a0 + a1*Tseries + a2*Tseries**2
     fitstring = f'Tcal = {a0:.5f} + {a1:.5f}*Tmeas\n+ {a2:.5e}*Tmeas^2'
 
-    def quad_fit(x,a0,a1,a2):
-        return a0 + a1*x + a2*x**2
     Terr[0] = 0.01
 
     popt,pcov = curve_fit(quad_fit,Tset[:Tsetmaxi+1],Tmeas[:Tsetmaxi+1],sigma = Terr[:Tsetmaxi+1])
