@@ -234,7 +234,7 @@ class Ui_MainWindow(object):
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
-                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0)')
+                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False)')
         print(string)
         self.writeLog()
 
