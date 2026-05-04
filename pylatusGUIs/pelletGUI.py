@@ -163,6 +163,18 @@ class Ui_MainWindow(object):
         self.xasBox.addItem('Xanes')
         self.gridLayout.addWidget(self.xasBox,nrows*nsubrows+1,7)
 
+        self.fluoLabel = QtWidgets.QLabel()
+        self.fluoLabel.setObjectName('fluoLabel')
+        self.fluoLabel.setText('measure fluorescence')
+        self.gridLayout.addWidget(self.fluoLabel, nrows*nsubrows,8)
+
+        self.fluoBox = QtWidgets.QComboBox()
+        self.fluoBox.setObjectName('fluoBox')
+        self.fluoBox.addItem('True')
+        self.fluoBox.addItem('False')
+        self.fluoBox.setCurrentIndex(1)
+        self.gridLayout.addWidget(self.fluoBox, nrows*nsubrows+1,8)
+
         self.group.setLayout(self.gridLayout)
         self.scrollArea = QtWidgets.QScrollArea()
         self.scrollArea.setWidget(self.group)
@@ -226,6 +238,7 @@ class Ui_MainWindow(object):
         ymotor=  self.ymotors.currentText()
         bigGrid = not self.sg
         xas = self.xasBox.currentText()
+        fluo = self.fluoBox.currentText()
         string = '\npos1y = #input here\n'
         string += 'pos1z = #input here\n'
         string += f'positionList = {positionList}\n'
@@ -234,7 +247,7 @@ class Ui_MainWindow(object):
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
-                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False)')
+                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo})')
         print(string)
         self.writeLog()
 
@@ -246,7 +259,7 @@ class Ui_MainWindow(object):
     def updateParams(self):
         self.paramdct = {}
         self.parnames = {}
-        params = [self.ymotors,self.zmotors, self.xasBox]
+        params = [self.ymotors,self.zmotors, self.xasBox, self.fluoBox]
         for par in params:
             self.paramdct[par] = par.currentIndex()
             self.parnames[par.objectName()] = par
