@@ -18,6 +18,34 @@ fulllogdir = f'{homedir}/{logdir}'
 #os.makedirs(fulllogdir,exist_ok=True)
 logger = logging.getLogger()
 
+class GUIparam():
+    def __init__(self, par:QtWidgets.QLineEdit| QtWidgets.QComboBox):
+        self.par = par
+        self.name = self.par.objectName()
+        self.value = self.getvalue()
+    def getvalue(self):
+        match type(self.par):
+            case QtWidgets.QComboBox: return self.par.currentIndex()
+            case QtWidgets.QLineEdit: return self.par.text()
+    def setvalue(self,value:str):
+        match type(self.par):
+            case QtWidgets.QComboBox: self.par.setCurrentIndex(int(value))
+            case QtWidgets.QLineEdit: self.par.setText(value)
+
+class ParamList():
+    def __init__(self, plist:list[GUIparam]):
+        self.plist:list[GUIparam] = plist
+    def matchname(self,name) -> GUIparam:
+        for p in self.plist:
+            if p.name == name:
+                return p
+    def __iter__(self):
+        return iter(self.plist)
+    def __getitem__(self, key):
+        return self.plist[key]
+    def __contains__(self, item):
+        return item in self.plist
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         '''
@@ -36,12 +64,12 @@ class Ui_MainWindow(object):
         self.gridLayout = QtWidgets.QGridLayout()
         self.group = QtWidgets.QGroupBox()
         self.logfile = f'{os.path.dirname(os.path.abspath(__file__))}/params.log'
-        self.pelletLabels = {}
-        self.sampleNames = {}
-        self.buttons = {}
-        self.elementList = {}
-        self.repLists = {}
-        self.values = {}
+        self.pelletLabels:dict[int,QtWidgets.QLabel] = {}
+        self.sampleNames:dict[int,QtWidgets.QLineEdit] = {}
+        self.buttons:dict[int,QtWidgets.QPushButton] = {}
+        self.elementList:dict[int,QtWidgets.QLineEdit] = {}
+        self.repLists:dict[int,QtWidgets.QLineEdit] = {}
+        self.values:dict[int,bool] = {}
         self.sg = parseArguments()
         if self.sg:
             ncols = 12
@@ -51,9 +79,9 @@ class Ui_MainWindow(object):
             nrows = 5
         nsubrows = 4
 
-        self.namesLabels = {}
-        self.elementsLabels = {}
-        self.repLabels = {}
+        self.namesLabels:dict[int,QtWidgets.QLabel] = {}
+        self.elementsLabels:dict[int,QtWidgets.QLabel] = {}
+        self.repLabels:dict[int,QtWidgets.QLabel] = {}
         for i in range(nrows):
             self.namesLabels[i] = QtWidgets.QLabel()
             self.namesLabels[i].setObjectName(f'namesLabels{i}')
@@ -114,9 +142,19 @@ class Ui_MainWindow(object):
         self.helpLabel = QtWidgets.QLabel()
         self.helpLabel.setObjectName('helpLabel')
         self.helpLabel.setText(('element list: comma separated elements. e.g. Cu,Fe,Zn\n'
-                                'repetition list: leave blank (default 3), comma separated values, or individual value\n'
-                                'e.g. 1,3,5 or just 5'))
-        self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 4)
+                                'repetition list: leave blank (default 3), comma separated\n'
+                                'values, or individual value, e.g. 1,3,5 or just 5'))
+        self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 3)
+
+        self.subdirlabel = QtWidgets.QLabel()
+        self.subdirlabel.setObjectName('subdirlabel')
+        self.subdirlabel.setText('subdir')
+        self.gridLayout.addWidget(self.subdirlabel, nrows*nsubrows, 4)
+
+        self.subdirbox = QtWidgets.QLineEdit()
+        self.subdirbox.setObjectName('subdirbox')
+        self.subdirbox.setText('pellets')
+        self.gridLayout.addWidget(self.subdirbox, nrows*nsubrows+1, 4)
 
         self.runButton = QtWidgets.QPushButton()
         self.runButton.setObjectName('runButton')
@@ -239,13 +277,14 @@ class Ui_MainWindow(object):
         bigGrid = not self.sg
         xas = self.xasBox.currentText()
         fluo = self.fluoBox.currentText()
+        subdir = self.subdirbox.text()
         string = '\npos1y = #input here\n'
         string += 'pos1z = #input here\n'
         string += f'positionList = {positionList}\n'
         string += f'sampleList = {sampleList}\n'
         string += f'elementList = {elementList2}\n'
         string += f'repList = {repetitionList}\n'
-        string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "pellets", positionList = positionList,\n'
+        string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "{subdir}", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
                    f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo})')
         print(string)
@@ -255,19 +294,21 @@ class Ui_MainWindow(object):
         match type(item):
             case QtWidgets.QComboBox: return item.currentIndex()
             case QtWidgets.QLineEdit: return item.text()
+
+    def setValue(self,item, value:str):
+        match type(item):
+            case QtWidgets.QComboBox: item.setCurrentIndex(int(value))
+            case QtWidgets.QLineEdit: item.setText(value)
             
     def updateParams(self):
-        self.paramdct = {}
-        self.parnames = {}
-        params = [self.ymotors,self.zmotors, self.xasBox, self.fluoBox]
-        for par in params:
-            self.paramdct[par] = par.currentIndex()
-            self.parnames[par.objectName()] = par
+        params = [self.ymotors,self.zmotors, self.xasBox, self.fluoBox, self.subdirbox]
+        self.params:ParamList = ParamList([GUIparam(par) for par in params])
+
     def writeLog(self):
         self.updateParams()
         string = ''
-        for par in self.paramdct:
-            string += f'{par.objectName()};{self.paramdct[par]}\n'
+        for par in self.params:
+            string += f'{par.name};{par.getvalue()}\n'
         f = open(self.logfile,'w')
         f.write(string)
         f.close()
@@ -280,9 +321,9 @@ class Ui_MainWindow(object):
             if not line:
                 continue
             name,value = line.split(';')
-            value = int(value)
-            par = self.parnames[name]
-            par.setCurrentIndex(value)
+            value = value.replace('\n','')
+            par = self.params.matchname(name)
+            par.setvalue(value)
         f.close()
         self.updateParams()
         
