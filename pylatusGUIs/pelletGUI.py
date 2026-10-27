@@ -47,7 +47,15 @@ class ParamList():
         return item in self.plist
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def __init__(self, ncols=8, nrows=5, customy=False, customz=False, sg = False, pos1y='',pos1z=''):
+        self.ncols = ncols
+        self.nrows= nrows
+        self.customy = customy
+        self.customz = customz
+        self.sg = sg
+        self.pos1y = pos1y
+        self.pos1z = pos1z
+    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
         '''
         eventlogfile = f'{homedir}/{logdir}/mfcgui.log'
         logging.basicConfig(filename=eventlogfile, level = logging.INFO, format = '%(asctime)s %(levelname)-8s %(message)s',
@@ -70,13 +78,10 @@ class Ui_MainWindow(object):
         self.elementList:dict[int,QtWidgets.QLineEdit] = {}
         self.repLists:dict[int,QtWidgets.QLineEdit] = {}
         self.values:dict[int,bool] = {}
-        self.sg = parseArguments()
-        if self.sg:
-            ncols = 12
-            nrows = 7
-        else:
-            ncols = 8
-            nrows = 5
+
+
+        ncols = self.ncols
+        nrows = self.nrows
         nsubrows = 4
 
         self.namesLabels:dict[int,QtWidgets.QLabel] = {}
@@ -278,15 +283,18 @@ class Ui_MainWindow(object):
         xas = self.xasBox.currentText()
         fluo = self.fluoBox.currentText()
         subdir = self.subdirbox.text()
-        string = '\npos1y = #input here\n'
-        string += 'pos1z = #input here\n'
+        string = f'\npos1y = {self.pos1y} #input here\n'
+        string += f'pos1z = {self.pos1z} #input here\n'
         string += f'positionList = {positionList}\n'
         string += f'sampleList = {sampleList}\n'
         string += f'elementList = {elementList2}\n'
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "{subdir}", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
-                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo})')
+                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo}')
+        if self.customz and self.customy:
+            string += f', customy = {self.customy}, customz = {self.customz}'
+        string += ')'
         print(string)
         self.writeLog()
 
@@ -329,9 +337,25 @@ class Ui_MainWindow(object):
         
 def main():
     import sys
+    sg = parseArguments()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
+    if sg:
+        ncols = 12
+        nrows = 7
+    else:
+        ncols = 8
+        nrows = 5
+    ui = Ui_MainWindow(ncols, nrows, sg=sg)
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec())
+
+def foilgrid():
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow(nrows=4,ncols=4, customy=50, customz=40, pos1y=247.2, pos1z=6.4)
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec())
