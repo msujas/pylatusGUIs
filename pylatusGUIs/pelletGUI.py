@@ -4,6 +4,7 @@ import pathlib
 import os
 from functools import partial
 import argparse
+from enum import Enum
 
 def parseArguments():
     parser = argparse.ArgumentParser()
@@ -46,15 +47,28 @@ class ParamList():
     def __contains__(self, item):
         return item in self.plist
 
+class GridTypes(Enum):
+    big='big'
+    small='small'
+    foil='foil'
+    def getstr(self):
+        return f'GridTypes.{self.value}'
+    def getcolsrows(self):
+        match self:
+            case GridTypes.big: return (8,5)
+            case GridTypes.small: return (12,7)
+            case GridTypes.foil: return (4,4)
+    def getpos1yz(self):
+        match self:
+            case GridTypes.big: return (267.0, 42.83)
+            case GridTypes.small: return (260.05,38.88)
+            case GridTypes.foil: return (247.2, 6.4)
+
 class Ui_MainWindow(object):
-    def __init__(self, ncols=8, nrows=5, customy=False, customz=False, sg = False, pos1y='',pos1z=''):
-        self.ncols = ncols
-        self.nrows= nrows
-        self.customy = customy
-        self.customz = customz
-        self.sg = sg
-        self.pos1y = pos1y
-        self.pos1z = pos1z
+    def __init__(self, grid = 'big'):
+        self.grid = GridTypes(grid)
+        self.gridstr = self.grid.getstr()
+        self.pos1y, self.pos1z = self.grid.getpos1yz()
     def setupUi(self, MainWindow: QtWidgets.QMainWindow):
         '''
         eventlogfile = f'{homedir}/{logdir}/mfcgui.log'
@@ -80,8 +94,7 @@ class Ui_MainWindow(object):
         self.values:dict[int,bool] = {}
 
 
-        ncols = self.ncols
-        nrows = self.nrows
+        ncols, nrows = self.grid.getcolsrows()
         nsubrows = 4
 
         self.namesLabels:dict[int,QtWidgets.QLabel] = {}
@@ -279,7 +292,7 @@ class Ui_MainWindow(object):
             return
         zmotor= self.zmotors.currentText()
         ymotor=  self.ymotors.currentText()
-        bigGrid = not self.sg
+        
         xas = self.xasBox.currentText()
         fluo = self.fluoBox.currentText()
         subdir = self.subdirbox.text()
@@ -291,19 +304,17 @@ class Ui_MainWindow(object):
         string += f'repList = {repetitionList}\n'
         string += (f'ef.pelletGrid(pos1y, pos1z, sampleList = sampleList, subdir = "{subdir}", positionList = positionList,\n'
                    f'elementList = elementList, repList = repList, stage = "{ymotor}", zmotorName = "{zmotor}", autoGains = True,\n' 
-                   f'bigGrid = {bigGrid}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo}')
-        if self.customz and self.customy:
-            string += f', customy = {self.customy}, customz = {self.customz}'
-        string += ')'
+                   f'grid = {self.gridstr}, xas = {xas}, skip = 0, sequencer=False, fluoMeasure={fluo}')
+        string += ')' #like this in case want to add other options in future
         print(string)
         self.writeLog()
 
-    def getValue(self,item):
+    def getValue(self,item:QtWidgets.QComboBox|QtWidgets.QLineEdit):
         match type(item):
             case QtWidgets.QComboBox: return item.currentIndex()
             case QtWidgets.QLineEdit: return item.text()
 
-    def setValue(self,item, value:str):
+    def setValue(self,item:QtWidgets.QComboBox|QtWidgets.QLineEdit, value:str):
         match type(item):
             case QtWidgets.QComboBox: item.setCurrentIndex(int(value))
             case QtWidgets.QLineEdit: item.setText(value)
@@ -340,13 +351,8 @@ def main():
     sg = parseArguments()
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    if sg:
-        ncols = 12
-        nrows = 7
-    else:
-        ncols = 8
-        nrows = 5
-    ui = Ui_MainWindow(ncols, nrows, sg=sg)
+    grid = 'small' if sg else 'big'
+    ui = Ui_MainWindow(grid=grid)
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec())
@@ -355,7 +361,7 @@ def foilgrid():
     import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow(nrows=4,ncols=4, customy=50, customz=40, pos1y=247.2, pos1z=6.4)
+    ui = Ui_MainWindow(grid = 'foil')
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec())
