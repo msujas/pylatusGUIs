@@ -6,6 +6,15 @@ from functools import partial
 import argparse
 from enum import Enum
 
+import platform
+
+if platform.system() == 'Windows':
+    import ctypes
+    myappid = '_pelletgui'
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+iconfile = f'{os.path.dirname(os.path.abspath(__file__))}/icons/icon.ico'
+
 def parseArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-sg','--smallgrid', action='store_true', help='use small grid (12x7) instead of big grid (8x5)')
@@ -79,9 +88,13 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         super().setObjectName("MainWindow")
         
+        print(iconfile)
+        
+        
         self.setWindowTitle('Pellet grid GUI (ctrl+q to close)')
         self.centralwidget = QtWidgets.QWidget()
         self.centralwidget.setObjectName("centralwidget")
+        self.setWindowIcon(QtGui.QIcon(iconfile))
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.group = QtWidgets.QGroupBox()
@@ -365,6 +378,7 @@ class TextWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super().__init__()
         super().setObjectName("MainWindow")
+        self.setWindowIcon(QtGui.QIcon(iconfile))
         self.setWindowTitle("pelletGrid script (copy + paste into Pylatus, ctrl+w to close)")
         self.textbox = QtWidgets.QPlainTextEdit()
         self.textbox.setReadOnly(True)
