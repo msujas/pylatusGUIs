@@ -88,8 +88,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         super().setObjectName("MainWindow")
         
-        print(iconfile)
-        
         
         self.setWindowTitle('Pellet grid GUI (ctrl+q to close)')
         self.centralwidget = QtWidgets.QWidget()
