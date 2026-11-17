@@ -64,23 +64,23 @@ class GridTypes(Enum):
             case GridTypes.small: return (260.05,38.88)
             case GridTypes.foil: return (247.2, 6.4)
 
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QMainWindow):
     def __init__(self, grid = 'big'):
         self.grid = GridTypes(grid)
         self.gridstr = self.grid.getstr()
         self.pos1y, self.pos1z = self.grid.getpos1yz()
-    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
+    def setupUi(self):
         '''
         eventlogfile = f'{homedir}/{logdir}/mfcgui.log'
         logging.basicConfig(filename=eventlogfile, level = logging.INFO, format = '%(asctime)s %(levelname)-8s %(message)s',
                             datefmt = '%Y/%m/%d_%H:%M:%S')
         logger.info('mfcgui opened')
         '''
-        self.MainWindow = MainWindow
-        self.MainWindow.setObjectName("MainWindow")
+        super().__init__()
+        super().setObjectName("MainWindow")
         
-        self.MainWindow.setWindowTitle('Pellet grid GUI')
-        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.setWindowTitle('Pellet grid GUI (ctrl+q to close)')
+        self.centralwidget = QtWidgets.QWidget()
         self.centralwidget.setObjectName("centralwidget")
 
         self.gridLayout = QtWidgets.QGridLayout()
@@ -238,10 +238,15 @@ class Ui_MainWindow(object):
         self.outerLayout.addWidget(self.scrollArea)
         self.centralwidget.setLayout(self.outerLayout)
 
-        self.MainWindow.resize((ncols+1)*125, 900)
+        self.textopen = False
 
-        self.MainWindow.setCentralWidget(self.centralwidget)
-        QtCore.QMetaObject.connectSlotsByName(self.MainWindow)
+        self.resize((ncols+1)*125, 900)
+
+        self.closeshortcut = QtGui.QShortcut(QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL | QtCore.Qt.Key.Key_Q),self)
+        self.closeshortcut.activated.connect(self.close)
+
+        self.setCentralWidget(self.centralwidget)
+        QtCore.QMetaObject.connectSlotsByName(self)
         self.updateParams()
         self.readLog()
 
@@ -308,6 +313,11 @@ class Ui_MainWindow(object):
         string += ')' #like this in case want to add other options in future
         print(string)
         self.writeLog()
+        self.textwindow = TextWindow()
+        self.textwindow.settext_show(string)
+        self.textopen= True
+
+
 
     def getValue(self,item:QtWidgets.QComboBox|QtWidgets.QLineEdit):
         match type(item):
@@ -345,25 +355,49 @@ class Ui_MainWindow(object):
             par.setvalue(value)
         f.close()
         self.updateParams()
+
+    def closeEvent(self, a0):
+        if self.textopen:
+            self.textwindow.close()
+        return super().closeEvent(a0)
+
+class TextWindow(QtWidgets.QMainWindow):
+    def __init__(self):
+        super().__init__()
+        super().setObjectName("MainWindow")
+        self.setWindowTitle("pelletGrid script (copy + paste into Pylatus, ctrl+w to close)")
+        self.textbox = QtWidgets.QPlainTextEdit()
+        self.textbox.setReadOnly(True)
+        self.textbox.setMinimumWidth(600)
+        self.textbox.setMinimumHeight(250)
+        self.setCentralWidget(self.textbox)
+        self.closeshortcut = QtGui.QShortcut(QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL | QtCore.Qt.Key.Key_W),self)
+        self.closeshortcut.activated.connect(self.close)
+    def settext(self,text):
+        self.textbox.setPlainText(text)
+    def settext_show(self,text):
+        self.settext(text)
+        self.textbox.adjustSize()
+        self.adjustSize()
+        self.show()
+
         
 def main():
     import sys
     sg = parseArguments()
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
     grid = 'small' if sg else 'big'
     ui = Ui_MainWindow(grid=grid)
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    ui.setupUi()
+    ui.show()
     sys.exit(app.exec())
 
 def foilgrid():
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow(grid = 'foil')
-    ui.setupUi(MainWindow)
-    MainWindow.show()
+    ui.setupUi()
+    ui.show()
     sys.exit(app.exec())
 
 if __name__ == '__main__':
