@@ -5,7 +5,7 @@ import os
 from functools import partial
 import argparse
 from enum import Enum
-
+import json
 import platform
 
 if platform.system() == 'Windows':
@@ -55,6 +55,10 @@ class ParamList():
         return self.plist[key]
     def __contains__(self, item):
         return item in self.plist
+    def asdct(self):
+        return {p.name:p.value for p in self.plist}
+    def fromjson(self,string):
+        return json.loads(string)
 
 class GridTypes(Enum):
     big='big'
@@ -74,17 +78,13 @@ class GridTypes(Enum):
             case GridTypes.foil: return (247.2, 6.4)
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, grid = 'big'):
+    def __init__(self, grid = 'big', configfname = 'params.log'):
         self.grid = GridTypes(grid)
         self.gridstr = self.grid.getstr()
         self.pos1y, self.pos1z = self.grid.getpos1yz()
+        self.configfname = configfname
     def setupUi(self):
-        '''
-        eventlogfile = f'{homedir}/{logdir}/mfcgui.log'
-        logging.basicConfig(filename=eventlogfile, level = logging.INFO, format = '%(asctime)s %(levelname)-8s %(message)s',
-                            datefmt = '%Y/%m/%d_%H:%M:%S')
-        logger.info('mfcgui opened')
-        '''
+
         super().__init__()
         super().setObjectName("MainWindow")
         
@@ -96,7 +96,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.group = QtWidgets.QGroupBox()
-        self.logfile = f'{os.path.dirname(os.path.abspath(__file__))}/params.log'
+        configdir = f'{homedir}/.config/pelletGUI'
+        os.makedirs(configdir,exist_ok=True)
+        self.configfile = f'{configdir}/{self.configfname}'
         self.pelletLabels:dict[int,QtWidgets.QLabel] = {}
         self.sampleNames:dict[int,QtWidgets.QLineEdit] = {}
         self.buttons:dict[int,QtWidgets.QPushButton] = {}
@@ -219,6 +221,9 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         
         self.ymotors.currentIndexChanged.connect(self.setZmotors)
 
+        self.ymotors.setCurrentIndex(1)
+        self.zmotors.setCurrentIndex(2)
+
         self.xasLabel = QtWidgets.QLabel()
         self.xasLabel.setObjectName('xasLabel')
         self.xasLabel.setText('xas')
@@ -271,8 +276,8 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
     def setZmotors(self):
         self.zmotors.clear()
         match self.ymotors.currentText():
-            case 'sty': items = ['stzb', 'battz'] #self.zmotors.setItemText(0,'stzb')
-            case 'capy': items = ['capz','battz','fastz'] #self.zmotors.setItemText(0,'capz')
+            case 'sty': items = ['stzb', 'battz']
+            case 'capy': items = ['capz','battz','fastz']
         self.zmotors.addItems(items)
 
     def generateLists(self):
@@ -349,14 +354,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         string = ''
         for par in self.params:
             string += f'{par.name};{par.getvalue()}\n'
-        f = open(self.logfile,'w')
+        f = open(self.configfile,'w')
         f.write(string)
         f.close()
 
     def readLog(self):
-        if not os.path.exists(self.logfile):
+        if not os.path.exists(self.configfile):
             return
-        f = open(self.logfile,'r')
+        f = open(self.configfile,'r')
         for line in f:
             if not line:
                 continue
@@ -407,7 +412,7 @@ def main():
 def foilgrid():
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    ui = Ui_MainWindow(grid = 'foil')
+    ui = Ui_MainWindow(grid = 'foil', configfname='foil.log')
     ui.setupUi()
     ui.show()
     sys.exit(app.exec())
