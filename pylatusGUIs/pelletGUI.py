@@ -174,7 +174,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.helpLabel.setObjectName('helpLabel')
         self.helpLabel.setText(('element list: comma separated elements. e.g. Cu,Fe,Zn\n'
                                 'repetition list: leave blank (default 3), comma separated\n'
-                                'values, or individual value, e.g. 1,3,5 or just 5'))
+                                'values e.g. 1,3,5, or an individual value e.g. just 5'))
         self.gridLayout.addWidget(self.helpLabel, nrows*nsubrows, 1, 2, 3)
 
         self.subdirlabel = QtWidgets.QLabel()
@@ -253,6 +253,10 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.outerLayout = QtWidgets.QHBoxLayout()
         self.outerLayout.addWidget(self.scrollArea)
         self.centralwidget.setLayout(self.outerLayout)
+        screen = QtGui.QGuiApplication.primaryScreen()
+        height = screen.size().height()
+        if height >=960: 
+            super().setMinimumHeight(960)
 
         self.textopen = False
 
