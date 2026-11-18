@@ -255,12 +255,15 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.centralwidget.setLayout(self.outerLayout)
         screen = QtGui.QGuiApplication.primaryScreen()
         height = screen.size().height()
-        if height >=960: 
-            super().setMinimumHeight(960)
+        
 
         self.textopen = False
+        gridgeo = self.gridLayout.geometry()
 
-        self.resize((ncols+1)*125, 900)
+        totalheight = gridgeo.height()*1.05
+        totalwidth = gridgeo.width()*1.05
+        print(totalheight,totalwidth)
+        self.resize(int(totalwidth), int(min(totalheight, height-20)))
 
         self.closeshortcut = QtGui.QShortcut(QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL | QtCore.Qt.Key.Key_Q),self)
         self.closeshortcut.activated.connect(self.close)
