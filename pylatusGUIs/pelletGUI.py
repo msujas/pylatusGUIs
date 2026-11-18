@@ -262,7 +262,6 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         totalheight = gridgeo.height()*1.05
         totalwidth = gridgeo.width()*1.05
-        print(totalheight,totalwidth)
         self.resize(int(totalwidth), int(min(totalheight, height-20)))
 
         self.closeshortcut = QtGui.QShortcut(QtGui.QKeySequence( QtCore.Qt.Modifier.CTRL | QtCore.Qt.Key.Key_Q),self)
