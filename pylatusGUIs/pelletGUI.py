@@ -14,6 +14,7 @@ if platform.system() == 'Windows':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 iconfile = f'{os.path.dirname(os.path.abspath(__file__))}/icons/icon.ico'
+smalliconfile = f'{os.path.dirname(os.path.abspath(__file__))}/icons/smallicon.ico'
 
 def parseArguments():
     parser = argparse.ArgumentParser()
@@ -78,11 +79,12 @@ class GridTypes(Enum):
             case GridTypes.foil: return (247.2, 6.4)
 
 class Ui_MainWindow(QtWidgets.QMainWindow):
-    def __init__(self, grid = 'big', configfname = 'params.log'):
+    def __init__(self, grid = 'big', configfname = 'params.log', iconfile = iconfile):
         self.grid = GridTypes(grid)
         self.gridstr = self.grid.getstr()
         self.pos1y, self.pos1z = self.grid.getpos1yz()
         self.configfname = configfname
+        self.iconfile = iconfile
     def setupUi(self):
 
         super().__init__()
@@ -92,7 +94,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle('Pellet grid GUI (ctrl+q to close)')
         self.centralwidget = QtWidgets.QWidget()
         self.centralwidget.setObjectName("centralwidget")
-        self.setWindowIcon(QtGui.QIcon(iconfile))
+        self.setWindowIcon(QtGui.QIcon(self.iconfile))
 
         self.gridLayout = QtWidgets.QGridLayout()
         self.group = QtWidgets.QGroupBox()
@@ -419,6 +421,14 @@ def foilgrid():
     import sys
     app = QtWidgets.QApplication(sys.argv)
     ui = Ui_MainWindow(grid = 'foil', configfname='foil.log')
+    ui.setupUi()
+    ui.show()
+    sys.exit(app.exec())
+
+def smallgrid():
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    ui = Ui_MainWindow(grid = 'small', iconfile=smalliconfile)
     ui.setupUi()
     ui.show()
     sys.exit(app.exec())
